@@ -95,6 +95,7 @@ class Maze():
         print(Grid)
         print(f"Number of paths: {num_paths}")
         print(f"Length of each path: {path_lengths}")
+        return Grid
 
 def main():
     maze = Maze(9, 5)
