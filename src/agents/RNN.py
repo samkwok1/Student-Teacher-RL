@@ -13,6 +13,7 @@ class MazeRNN(nn.Module):
         self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
 
     def forward(self, x):
+        pass
         
 
 
