@@ -1,64 +1,116 @@
-# ref: https://github.com/ZJLAB-AMMI/LLM4Teach/tree/main/env
-# ref: https://medium.com/practical-coders-chronicles/conquering-openais-minigrid-a-comprehensive-guide-to-mastering-gridworld-in-python-bfe4f2a76c2e
-
-from minigrid.core.grid import Grid
-from minigrid.core.mission import MissionSpace
-from minigrid.core.world_object import Door, Goal, Key, Wall
-from minigrid.manual_control import ManualControl
-from minigrid.minigrid_env import MiniGridEnv
 import random
+import numpy as np
+from collections import deque
 
-# creates the new maze environment with class inherited from MiniGridEnv
-class MazeEnv(MiniGridEnv):
-    def __init__(
-        self,
-        random_seed,
-        size,
-        agent_start_pos=(1, 1),
-        agent_start_dir=0,
-        max_steps: int | None = None,
-        **kwargs,
-    ):
-        self.agent_start_pos = agent_start_pos
-        self.agent_start_dir = agent_start_dir
-        mission_space = MissionSpace(mission_func=self._gen_mission)
-        super().__init__(
-            mission_space=mission_space,
-            grid_size=size,
-            max_steps=256,
-            **kwargs,
-        )
+class Maze():
+    def __init__(self, size, random_seed) -> None:
+        self.size = size
         self.random_seed = random_seed
+        self.Grid = self.generate_grid()
 
-    @staticmethod
-    # define the mission sapce
-    def _gen_mission():
-        return "grand mission"
-    
-    
-    # TODO rewrite reward to overwrite the default reward function
-    def _reward(self):
-        return 0
-    
-    # Use Prim's algorithm to generate the maze
-    def _gen_grid(self, width, height):
-        self.grid = Grid(width, height)
-        self.grid.wall_rect(0, 0, width, height)
-        if self.random_seed is not None:
+    def generate_grid(self):
+
+        # Define three helper functions
+        # Helper 1
+        def _get_neighbors(cur_cell):
+            x, y = cur_cell
+            neighbors = []
+            if x > 0:
+                neighbors.append((x - 1, y))
+            if x < self.size - 1:
+                neighbors.append((x + 1, y))
+            if y > 0:
+                neighbors.append((x, y - 1))
+            if y < self.size - 1:
+                neighbors.append((x, y + 1))
+            return neighbors
+
+        # Helper 2
+        def _count_paths_and_lengths(grid):
+            size = len(grid)
+            start = (0, 0)
+            end = (size - 1, size - 1)
+            
+            if grid[start[0]][start[1]] == 0 or grid[end[0]][end[1]] == 0:
+                return 0, []
+
+            queue = deque([(start, 0, set([start]))])  # Each element is a tuple (current cell, path length, visited cells)
+            path_count = 0
+            path_lengths = []
+            
+            while queue:
+                cell, length, visited = queue.popleft()
+                if cell == end:
+                    path_count += 1
+                    path_lengths.append(length + 1)
+                    continue
+                for neighbor in _get_neighbors(cell):
+                    if neighbor not in visited and grid[neighbor[0]][neighbor[1]] == 1:
+                        new_visited = visited.copy()
+                        new_visited.add(neighbor)
+                        queue.append((neighbor, length + 1, new_visited))
+            
+            return path_count, path_lengths
+        
+        # Helper 3
+        def _get_unexplored_neighbors(cur_cell, Grid):
+            neighbors = _get_neighbors(cur_cell)
+            unexplored = []
+            for neighbor in neighbors:
+                loc_x, loc_y = neighbor
+                if Grid[loc_x][loc_y] == 0:
+                    unexplored.append((loc_x, loc_y))
+
+            # If the cell has 2 or more explore neighbors, do nothing
+            if len(neighbors) - len(unexplored) >= 2:
+                return []
+            return unexplored
+        
+        # Run the functionality
+        # set the random seed
+        if self.random_seed:
             random.seed(self.random_seed)
 
+        # Initialize the grid
+        Grid = np.zeros((self.size, self.size))
+
+        # We always want the exit to be at the bottom right
+        cur_cell = (self.size - 1, self.size - 1)
+        start_cell = (0, 0)
+
+        all_cells = [cur_cell, start_cell]
+        while all_cells:
+            neighbors = _get_unexplored_neighbors(cur_cell, Grid)
+            if neighbors:
+                Grid[cur_cell[0]][cur_cell[1]] = 1
+                for neighbor in neighbors:
+                    all_cells.append(neighbor)
+            all_cells.remove(cur_cell)
+            if all_cells:
+                cur_cell = all_cells[random.randint(0, len(all_cells) - 1)]
         
+        # TODO: Make modifications to your grid to ensure that at least one path exists
+        # These modifications are to make more than 1 path on a 9x9 environment with seed 5
+        Grid[3][6] = 1
+        Grid[4][2] = 0
+        Grid[4][1] = 1
+        Grid[6][0] = 1
 
+        num_paths, path_lengths = _count_paths_and_lengths(Grid.copy())
 
+        print(Grid)
+        print(f"Number of paths: {num_paths}")
+        print(f"Length of each path: {path_lengths}")
+        return Grid
 
-    
 def main():
-    env = MazeEnv(render_mode="human")
+    maze = Maze(9, 5)
 
-    # enable manual control for testing
-    manual_control = ManualControl(env, seed=42)
-    manual_control.start()
-
-    
 if __name__ == "__main__":
     main()
+
+            
+            
+
+
+
