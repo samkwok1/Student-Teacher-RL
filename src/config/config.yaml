@@ -1,0 +1,20 @@
+hydra:
+  run:
+    dir: experiments
+
+Maze:
+  size: 9
+  num_actions: 4
+  random_seed: 5
+  modifications:
+    - 3,6,1
+    - 4,2,0
+    - 4,1,1
+    - 6,0,1
+
+Q_hyper:
+  gamma: 0.9
+  alpha: 0.1
+  epsilon: 0.1
+  num_episodes: 10000
+  parent_reliability: 1
