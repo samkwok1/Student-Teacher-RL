@@ -97,29 +97,26 @@ class Q_agent():
             # Gets the actions according to the agent's properties.
             actions = [0, 1, 2, 3]
             random_number = random.uniform(0, 1)
+            if random_number < self.epsilon:
+                normal_action = random.choice(actions)
+            else:
+                normal_action = np.argmax(self.Q_table[cur_state])
             # If the agent is a parent or its a child that gets post-action advice, have it choose an action the
             # normal way, as defined by epsilon greedy.
             if self.parent or (self.post_advice and self.child):
-                if random_number < self.epsilon:
-                    action = random.choice(actions)
-                else:
-                    action = np.argmax(self.Q_table[cur_state])
-            # If the agent is a child...
-            if self.child:
+                action = normal_action
+            # If the agent is a pre-advice child...
+            elif self.child and self.pre_advice:
                 # ...have it choose an action if it is more than pre_advice_epsilon% unsure about
                 # which action to choose (if it doesn't have a Q value that holds more than 50% of the probability
                 # mass for its current state) then have it choose the action the parent recommends. Otherwise, 
                 # have it choose normally (as according to epsilon greedy)
-                if self.pre_advice:
-                    # Have it choose according to the parent if unsure
-                    dist = special.softmax(self.Q_table[cur_state])
-                    if max(dist) < self.pre_advice_epsilon:
-                        action = np.argmax(self.parent_Q_table[cur_state])
-                    # Have it choose normally
-                    elif random_number < self.epsilon:
-                        action = random.choice(actions)
-                    else:
-                        action = np.argmax(self.Q_table[cur_state])
+                dist = special.softmax(self.Q_table[cur_state])
+                if max(dist) < self.pre_advice_epsilon:
+                    action = np.argmax(self.parent_Q_table[cur_state])
+                # Have it choose normally
+                else:
+                    action = normal_action
             return action
 
 
@@ -144,7 +141,7 @@ class Q_agent():
                 # Move the agent through the maze.
                 cur_state = new_state
                 
-        # print(self.Q_table)
+        print(self.Q_table)
 
     def eval(self):
         pass

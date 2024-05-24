@@ -43,56 +43,57 @@ def main(args: DictConfig) -> None:
                          reward_grid=Reward_maze.reward_maze)
     
     Parent_Q.train()
-    # Parent_Q.eval()
+    Parent_Q.eval()
 
 
-    # # Init Child agent - PRE-advice
-    # max_steps = max(Maze.path_lengths) + 1000
-    # Q_hyper = args.Q_hyper
-    # Child_pre = q.Q_agent(num_states=Maze_args.size**2,
-    #                      num_actions=Maze_args.num_actions,
-    #                      gamma=Q_hyper.gamma,
-    #                      alpha=Q_hyper.alpha,
-    #                      epsilon=Q_hyper.epsilon,
-    #                      num_episodes=Q_hyper.num_episodes,
-    #                      maximum_steps=max_steps,
-    #                      parent=False,
-    #                      parent_Q_table=Parent_Q.Q_table,
-    #                      child=True,
-    #                      pre_advice=True,
-    #                      pre_advice_epsilon=0.5,
-    #                      post_advice=False,
-    #                      post_advice_weight=0,
-    #                      reliability=Q_hyper.parent_reliability,
-    #                      size=Maze_args.size,
-    #                      grid=Maze.Grid,
-    #                      reward_grid=Reward_maze.reward_maze)
-    # Child_pre.train()
-    # Child_pre.eval()
+    # Init Child agent - PRE-advice
+    max_steps = max(Maze.path_lengths)
+    Q_hyper = args.Q_hyper
+    Child_params = args.Child_params
+    Child_pre = q.Q_agent(num_states=Maze_args.size**2,
+                         num_actions=Maze_args.num_actions,
+                         gamma=Q_hyper.gamma,
+                         alpha=Q_hyper.alpha,
+                         epsilon=Q_hyper.epsilon,
+                         num_episodes=Q_hyper.num_episodes,
+                         maximum_steps=max_steps,
+                         parent=False,
+                         parent_Q_table=Parent_Q.Q_table,
+                         child=True,
+                         pre_advice=True,
+                         pre_advice_epsilon=Child_params.pre_advice_epsilon,
+                         post_advice=False,
+                         post_advice_weight=Child_params.post_advice_weight,
+                         reliability=Q_hyper.parent_reliability,
+                         size=Maze_args.size,
+                         grid=Maze.Grid,
+                         reward_grid=Reward_maze.reward_maze)
+    Child_pre.train()
+    Child_pre.eval()
     
-    # # Init Child agent - POST-advice
-    # max_steps = max(Maze.path_lengths) + 1000
-    # Q_hyper = args.Q_hyper
-    # Child_post = q.Q_agent(num_states=Maze_args.size**2,
-    #                      num_actions=Maze_args.num_actions,
-    #                      gamma=Q_hyper.gamma,
-    #                      alpha=Q_hyper.alpha,
-    #                      epsilon=Q_hyper.epsilon,
-    #                      num_episodes=Q_hyper.num_episodes,
-    #                      maximum_steps=max_steps,
-    #                      parent=False,
-    #                      parent_Q_table=Parent_Q.Q_table,
-    #                      child=True,
-    #                      pre_advice=False,
-    #                      pre_advice_epsilon=0,
-    #                      post_advice=True,
-    #                      post_advice_weight=1,
-    #                      reliability=Q_hyper.parent_reliability,
-    #                      size=Maze_args.size,
-    #                      grid=Maze.Grid,
-    #                      reward_grid=Reward_maze.reward_maze)
-    # Child_post.train()
-    # Child_post.eval()
+    # Init Child agent - POST-advice
+    max_steps = max(Maze.path_lengths)
+    Q_hyper = args.Q_hyper
+    Child_post = q.Q_agent(num_states=Maze_args.size**2,
+                         num_actions=Maze_args.num_actions,
+                         gamma=Q_hyper.gamma,
+                         alpha=Q_hyper.alpha,
+                         epsilon=Q_hyper.epsilon,
+                         num_episodes=Q_hyper.num_episodes,
+                         maximum_steps=max_steps,
+                         parent=False,
+                         parent_Q_table=Parent_Q.Q_table,
+                         child=True,
+                         pre_advice=False,
+                         pre_advice_epsilon=Child_params.pre_advice_epsilon,
+                         post_advice=True,
+                         post_advice_weight=Child_params.post_advice_weight,
+                         reliability=Q_hyper.parent_reliability,
+                         size=Maze_args.size,
+                         grid=Maze.Grid,
+                         reward_grid=Reward_maze.reward_maze)
+    Child_post.train()
+    Child_post.eval()
 
 if __name__ == "__main__":
     main()
