@@ -3,15 +3,21 @@ import numpy as np
 from collections import deque
 
 class Maze():
-    def __init__(self, size, random_seed) -> None:
+    def __init__(self, 
+                 size: int, 
+                 random_seed: int, 
+                 modifications: list) -> None:
         self.size = size
         self.random_seed = random_seed
+        self.modifications = modifications
+        self.num_paths = 0
+        self.path_lengths = []
         self.Grid = self.generate_grid()
 
     def generate_grid(self):
 
         # Define three helper functions
-        # Helper 1
+        # Helper 1: This gets the neighbors of a cell in the grid that are in bounds
         def _get_neighbors(cur_cell):
             x, y = cur_cell
             neighbors = []
@@ -25,7 +31,7 @@ class Maze():
                 neighbors.append((x, y + 1))
             return neighbors
 
-        # Helper 2
+        # Helper 2: This counts the number of paths and the lengths of those paths in a grid
         def _count_paths_and_lengths(grid):
             size = len(grid)
             start = (0, 0)
@@ -52,7 +58,7 @@ class Maze():
             
             return path_count, path_lengths
         
-        # Helper 3
+        # Helper 3: This is part of Prim's algorithm for maze generation, gets the number of unexplored neighbors
         def _get_unexplored_neighbors(cur_cell, Grid):
             neighbors = _get_neighbors(cur_cell)
             unexplored = []
@@ -91,12 +97,14 @@ class Maze():
         
         # TODO: Make modifications to your grid to ensure that at least one path exists
         # These modifications are to make more than 1 path on a 9x9 environment with seed 5
-        Grid[3][6] = 1
-        Grid[4][2] = 0
-        Grid[4][1] = 1
-        Grid[6][0] = 1
+        for modification in self.modifications:
+            x, y, val = modification.split(',')
+            Grid[int(x)][int(y)] = int(val)
 
         num_paths, path_lengths = _count_paths_and_lengths(Grid.copy())
+
+        self.num_paths = num_paths
+        self.path_lengths = path_lengths
 
         print(Grid)
         print(f"Number of paths: {num_paths}")
