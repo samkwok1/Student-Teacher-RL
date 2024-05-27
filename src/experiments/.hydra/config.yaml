@@ -1,12 +1,11 @@
+sim:
+  sim_dir: None
+  sim_id: None
+  verbose: false
 Maze:
-  size: 9
+  size: 10
   num_actions: 4
-  random_seed: 5
-  modifications:
-  - 3,6,1
-  - 4,2,0
-  - 4,1,1
-  - 6,0,1
+  random_seed: 0
 Q_hyper:
   gamma: 0.9
   alpha: 0.1

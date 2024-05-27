@@ -27,7 +27,8 @@ class Q_agent():
                  reliability: int,
                  size: int,
                  grid: np.ndarray,
-                 reward_grid: np.ndarray):
+                 reward_grid: np.ndarray,
+                 verbose: bool):
         # Hyperparameters related to the Q update rule (you can find it online)
         self.Q_table = np.zeros((num_states, num_actions))
         self.gamma = gamma
@@ -61,7 +62,9 @@ class Q_agent():
         # Doesn't this only apply to the agent if the agent is a child? This is a design choice just to make them all
         # one class, if we're training a parent we won't actually use the child hyperparameters, and vice versa.
         # When these unused values are passed in in main.py, they're just garbage values.
-    
+
+        self.verbose = verbose
+
     def train(self):
 
         def get_state_given_action(state, action):
@@ -141,7 +144,9 @@ class Q_agent():
                 # Move the agent through the maze.
                 cur_state = new_state
                 
-        print(self.Q_table)
+        if self.verbose:
+            print("Q_table:")
+            print(self.Q_table)
 
     def eval(self):
         pass

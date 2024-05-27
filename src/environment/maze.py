@@ -6,13 +6,15 @@ class Maze():
     def __init__(self, 
                  size: int, 
                  random_seed: int, 
-                 modifications: list) -> None:
+                 verbose: bool) -> None:
         self.size = size
         self.random_seed = random_seed
-        self.modifications = modifications
         self.num_paths = 0
         self.path_lengths = []
+        self.verbose = verbose
+        # must be after everything else is set
         self.Grid = self.generate_grid()
+
 
     def generate_grid(self):
 
@@ -74,8 +76,7 @@ class Maze():
         
         # Run the functionality
         # set the random seed
-        if self.random_seed:
-            random.seed(self.random_seed)
+        random.seed(self.random_seed)
 
         # Initialize the grid
         Grid = np.zeros((self.size, self.size))
@@ -83,6 +84,7 @@ class Maze():
         # We always want the exit to be at the bottom right
         cur_cell = (self.size - 1, self.size - 1)
         start_cell = (0, 0)
+
 
         all_cells = [cur_cell, start_cell]
         while all_cells:
@@ -94,10 +96,9 @@ class Maze():
             all_cells.remove(cur_cell)
             if all_cells:
                 cur_cell = all_cells[random.randint(0, len(all_cells) - 1)]
-        
-        # TODO: Make modifications to your grid to ensure that at least one path exists
-        # These modifications are to make more than 1 path on a 9x9 environment with seed 5
-        for modification in self.modifications:
+
+        modifications = ['3,6,1','4,2,0', '4,1,1', '6,0,1']
+        for modification in modifications:
             x, y, val = modification.split(',')
             Grid[int(x)][int(y)] = int(val)
 
@@ -106,16 +107,17 @@ class Maze():
         self.num_paths = num_paths
         self.path_lengths = path_lengths
 
-        print(Grid)
-        print(f"Number of paths: {num_paths}")
-        print(f"Length of each path: {path_lengths}")
+        if self.verbose:
+            print("Maze generated:")
+            print(Grid)
+
         return Grid
 
-def main():
-    maze = Maze(9, 5)
+# def main():
+#     maze = Maze(9, 5)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
             
             
