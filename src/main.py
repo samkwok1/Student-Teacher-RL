@@ -8,7 +8,7 @@ import numpy as np
 RANDOM_SEEDS = {
     9:5,
     10:3,
-    25:3044,
+    25:3043,
 }
 
 def find_maze(maze_args, verbose):
@@ -28,7 +28,7 @@ def find_maze(maze_args, verbose):
     print("Found a compatible Maze!")
 
     if maze_args.size not in RANDOM_SEEDS:
-        print(f"Sucessful random seed: {random_seed}")
+        print(f"Sucessful random seed: {random_seed - 1}")
         print("Please input the successful random seed as an entry in RANDOM_SEEDS (found at the top of the file) as such... MAZE_SIZE:RANDOM_SEEDS")
 
     print(f"Number of paths: {Maze.num_paths}")
@@ -50,7 +50,7 @@ def main(args: DictConfig) -> None:
     Reward_maze.make_r_maze()
 
     # Init Parent agent
-    max_steps = max(Maze.path_lengths) + 1000
+    max_steps = max(Maze.path_lengths)
     Q_hyper = args.Q_hyper
     Parent_Q = q.Q_agent(num_states=Maze_args.size**2,
                          num_actions=Maze_args.num_actions,
