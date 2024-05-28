@@ -145,20 +145,26 @@ class Q_agent():
                 cur_state = new_state
 
                 # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
+                # Eli
                 
         if self.verbose:
             print("Q_table:")
             print(self.Q_table)
 
         # TODO here - if the agent is a parent, see whether the policy actually is optimal
+        # Sunny 
 
         # TODO here - if the agent is a parent, scramble the "optimal policy" in its Q-table
+        # Sunny
 
     def eval(self):
         pass
         # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
+        # Ashley
         # Maybe TODO - Eval using distance
         # TODO - plot the graphs
+        # Sam
+
         
 
 
