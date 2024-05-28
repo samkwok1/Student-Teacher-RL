@@ -28,6 +28,7 @@ class Q_agent():
                  size: int,
                  grid: np.ndarray,
                  reward_grid: np.ndarray,
+                 shortest_path_length = float, # when initializing the agent do "shortest_path_length = maze_instance.calculate_shortest_path_length"
                  verbose: bool):
         # Hyperparameters related to the Q update rule (you can find it online)
         self.Q_table = np.zeros((num_states, num_actions))
@@ -62,7 +63,7 @@ class Q_agent():
         # Doesn't this only apply to the agent if the agent is a child? This is a design choice just to make them all
         # one class, if we're training a parent we won't actually use the child hyperparameters, and vice versa.
         # When these unused values are passed in in main.py, they're just garbage values.
-
+        self.shortest_path_length = shortest_path_length
         self.verbose = verbose
 
     def train(self):
@@ -151,11 +152,54 @@ class Q_agent():
             print("Q_table:")
             print(self.Q_table)
 
-        # TODO here - if the agent is a parent, see whether the policy actually is optimal
-        # Sunny 
+        # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
+        def is_policy_optimal(self):
+            if not self.parent:
+                return False
+
+            cur_state = 0
+            path_length = 0
+            visited_states = set()
+
+            while cur_state != (self.size**2 - 1):
+                action = np.argmax(self.Q_table[cur_state])
+                new_state = self.get_state_given_action(cur_state, action)
+                if new_state in visited_states:
+                    return False
+                visited_states.add(new_state)
+                path_length += 1
+                cur_state = new_state
+                if path_length > self.shortest_path_length:
+                    return False
+
+            return path_length == self.shortest_path_length
+        
 
         # TODO here - if the agent is a parent, scramble the "optimal policy" in its Q-table
-        # Sunny
+        # the logic here is that we calcuate the number of states to be scrambled based on the reliability score, then randomly select the states 
+        # to be scrambled. For each state, we take out the optimal action and change it to one of the sub-optimal actions (again by choosing randomly)
+        def scramble_policy(self):
+            if not self.parent:
+                return  # Only scramble if the agent is a parent
+
+            num_states_to_scramble = int((1 - self.reliability) * self.Q_table.shape[0])
+            states_to_scramble = random.sample(range(self.Q_table.shape[0]), num_states_to_scramble)
+
+            for state in states_to_scramble:
+                optimal_action = np.argmax(self.Q_table[state])
+                possible_actions = list(range(self.Q_table.shape[1]))
+                possible_actions.remove(optimal_action)  # Remove the optimal action
+
+                # Choose a new action randomly from the remaining possible actions
+                new_action = random.choice(possible_actions)
+                current_optimal_value = self.Q_table[state][optimal_action]
+
+                # Reduce the Q-value of the current optimal action
+                self.Q_table[state][optimal_action] *= 0.9  # Reduce slightly to maintain some original learning
+
+                # Increase the Q-value of the new action to make it the new optimal
+                self.Q_table[state][new_action] = current_optimal_value * 1.1  # Boost to ensure it's the new max
+        
 
     def eval(self):
         pass

@@ -14,6 +14,8 @@ class Maze():
         self.verbose = verbose
         # must be after everything else is set
         self.Grid = self.generate_grid()
+        self.shortest_path_length = self.calculate_shortest_path_length()
+
 
 
     def generate_grid(self):
@@ -112,6 +114,27 @@ class Maze():
             print(Grid)
 
         return Grid
+    
+
+    # find the shortest path
+    def calculate_shortest_path_length(self):
+        from collections import deque
+        queue = deque([(0, 0, 0)])  # (x, y, distance)
+        visited = set([(0, 0)])
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+
+        while queue:
+            x, y, dist = queue.popleft()
+            if (x, y) == (self.size - 1, self.size - 1):
+                return dist  # Return the distance when end is reached
+
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.size and 0 <= ny < self.size and (nx, ny) not in visited and self.Grid[nx][ny] == 1:
+                    visited.add((nx, ny))
+                    queue.append((nx, ny, dist + 1))
+
+        return float('inf')  # Return infinity if no path is found
 
 # def main():
 #     maze = Maze(9, 5)
