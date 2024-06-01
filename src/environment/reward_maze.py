@@ -46,5 +46,5 @@ class RewardMaze():
                         self.reward_maze[state][a] = -1
 
         # Moving into the goal cell gives a positive reward of the length of the shortest path +1.
-        self.reward_maze[self.size**2 - 1][2] = self.len_shortest_path + 1
+        self.reward_maze[self.size**2 - 1 - 1][2] = self.len_shortest_path + 1
         self.reward_maze[self.size**2 - self.size - 1][3] = self.len_shortest_path + 1
