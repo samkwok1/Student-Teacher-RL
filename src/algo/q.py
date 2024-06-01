@@ -32,6 +32,8 @@ class Q_agent():
                  reward_grid: np.ndarray,
                  verbose: bool,
                  shortest_path_length = float, # when initializing the agent do "shortest_path_length = maze_instance.calculate_shortest_path_length"
+                 convergence_threshold: float,
+                 min_convergence_steps: int
                  ):
         # Hyperparameters related to the Q update rule (you can find it online)
         self.Q_table = np.zeros((num_states, num_actions))
@@ -69,6 +71,10 @@ class Q_agent():
         # When these unused values are passed in in main.py, they're just garbage values.
         self.shortest_path_length = shortest_path_length
         self.verbose = verbose
+
+        self.convergence_threshold = convergence_threshold
+        self.min_convergence_steps = min_convergence_steps
+        self.convergence_steps = None
 
     def train(self):
 
@@ -126,6 +132,13 @@ class Q_agent():
                 else:
                     action = normal_action
             return action
+
+
+        def has_converged(Q_table_old, Q_table_new):
+            return np.max(np.abs(Q_table_old - Q_table_new)) < self.convergence_threshold
+
+        Q_table_old = np.copy(self.Q_table)
+        steps_to_converge = 0
 
         # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
         def is_policy_optimal(self):
@@ -194,13 +207,23 @@ class Q_agent():
                     break
                 # Move the agent through the maze.
                 cur_state = new_state
+
+            if _ >= self.min_convergence_steps and has_converged(Q_table_old, self.Q_table):
+                steps_to_converge = _
+                break
+
+            Q_table_old = np.copy(self.Q_table)
+
+        self.convergence_steps = steps_to_converge
+
                 
                 # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
-                # Eli
+                # Eli (done above, 6/1/24, 1:33pm)
        
         if self.verbose:
             print(f"Q_table {self.Q_table.shape}:")
             print(self.Q_table)
+            print(f"Converged in {self.convergence_steps} steps")
 
 
     def eval(self):
