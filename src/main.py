@@ -58,6 +58,7 @@ def main(args: DictConfig) -> None:
                          alpha=Q_hyper.alpha,
                          epsilon=Q_hyper.epsilon,
                          num_episodes=Q_hyper.num_episodes,
+                         num_eval_episodes=Q_hyper.num_eval_episodes,
                          maximum_steps=max_steps,
                          parent=True,
                          parent_Q_table=np.zeros((1, 1)),
