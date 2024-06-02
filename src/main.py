@@ -4,6 +4,7 @@ from environment import maze, reward_maze
 from algo import q
 from util import plots
 import numpy as np
+from tqdm import tqdm
 
 RANDOM_SEEDS = {
     9:5,
@@ -35,6 +36,35 @@ def find_maze(maze_args, verbose):
     print(f"Length of each path: {Maze.path_lengths}")
     return Maze
 
+def eval(self):
+
+    # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
+    # TODO implement evaluation 
+    # https://colab.research.google.com/drive/1Ur_pYvL_IngmAttMBSZlBRwMNnpzQuY_#scrollTo=KASNViqL4tZn
+    # evaluate on reward over n number of episodes by actioning on the learned Q-table
+    rewards = []
+    is_optimal_policies = []
+    for _ in tqdm(range(self.num_eval_episodes)):
+        cur_state = 0  # Reset environment to initial state for each episode
+        episode_reward = 0
+        for _ in range(self.maximum_steps):
+            # Take the action (index) that have the maximum reward
+            action = np.argmax(self.Q_table[cur_state])
+            new_state = self.get_state_given_action(cur_state, action)
+            reward = self.reward_grid[cur_state][action]
+            episode_reward += reward
+            
+            if new_state == (self.size**2) - 1:
+                break
+            cur_state = new_state
+
+        rewards.append(episode_reward)
+        is_optimal_policies.append(self.is_policy_optimal())
+
+    print('Mean rewards: ', sum(rewards)/len(rewards))
+    print('Is optimal policy: ', sum(is_optimal_policies)/len(is_optimal_policies))
+
+    return 
 
 @hydra.main(config_path="config", config_name="config")
 def main(args: DictConfig) -> None:
@@ -77,7 +107,9 @@ def main(args: DictConfig) -> None:
                          min_convergence_steps=1)
     
     Parent_Q.train()
-    Parent_Q.eval()
+
+    for trial in range(num_trials):
+        
 
     plots.plot_grid(grid=Maze.Grid)
     # # Init Child agent - PRE-advice

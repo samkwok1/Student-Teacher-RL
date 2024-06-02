@@ -75,6 +75,7 @@ class Q_agent():
         self.convergence_threshold = convergence_threshold
         self.min_convergence_steps = min_convergence_steps
         self.convergence_steps = None
+        self.old_q_table = None
 
 
     def get_state_given_action(self, state, action):
@@ -154,45 +155,47 @@ class Q_agent():
         
         return path_length + 1 == self.shortest_path_length
      
+    def scramble_policy(self):
+        if not self.parent:
+            return  # Only scramble if the agent is a parent
+
+        num_states_to_scramble = int((1 - self.reliability) * self.Q_table.shape[0])
+        states_to_scramble = random.sample(range(self.Q_table.shape[0]), num_states_to_scramble)
+
+        for state in states_to_scramble:
+            optimal_action = np.argmax(self.Q_table[state])
+            possible_actions = list(range(self.Q_table.shape[1]))
+            possible_actions.remove(optimal_action)  # Remove the optimal action
+
+            # Choose a new action randomly from the remaining possible actions
+            new_action = random.choice(possible_actions)
+            current_optimal_value = self.Q_table[state][optimal_action]
+
+            # Reduce the Q-value of the current optimal action
+            self.Q_table[state][optimal_action] *= 0.9  # Reduce slightly to maintain some original learning
+
+            # Increase the Q-value of the new action to make it the new optimal
+            self.Q_table[state][new_action] = current_optimal_value * 1.1  # Boost to ensure it's the new max
+
 
     def train(self):
 
 
-        def has_converged(Q_table_old, Q_table_new):
-            return np.max(np.abs(Q_table_old - Q_table_new)) < self.convergence_threshold
+        # def has_converged(Q_table_old, Q_table_new):
+        #     return np.max(np.abs(Q_table_old - Q_table_new)) < self.convergence_threshold
 
-        Q_table_old = np.copy(self.Q_table)
-        steps_to_converge = 0   
+        # Q_table_old = np.copy(self.Q_table)
+        # steps_to_converge = 0   
 
         # TODO here - if the agent is a parent, scramble the "optimal policy" in its Q-table
         # the logic here is that we calcuate the number of states to be scrambled based on the reliability score, then randomly select the states 
         # to be scrambled. For each state, we take out the optimal action and change it to one of the sub-optimal actions (again by choosing randomly)
-        def scramble_policy(self):
-            if not self.parent:
-                return  # Only scramble if the agent is a parent
-
-            num_states_to_scramble = int((1 - self.reliability) * self.Q_table.shape[0])
-            states_to_scramble = random.sample(range(self.Q_table.shape[0]), num_states_to_scramble)
-
-            for state in states_to_scramble:
-                optimal_action = np.argmax(self.Q_table[state])
-                possible_actions = list(range(self.Q_table.shape[1]))
-                possible_actions.remove(optimal_action)  # Remove the optimal action
-
-                # Choose a new action randomly from the remaining possible actions
-                new_action = random.choice(possible_actions)
-                current_optimal_value = self.Q_table[state][optimal_action]
-
-                # Reduce the Q-value of the current optimal action
-                self.Q_table[state][optimal_action] *= 0.9  # Reduce slightly to maintain some original learning
-
-                # Increase the Q-value of the new action to make it the new optimal
-                self.Q_table[state][new_action] = current_optimal_value * 1.1  # Boost to ensure it's the new max
         
+        total_steps = 0
         # Traditional Q-learning algorithm
-        for _ in tqdm(range(self.num_episodes)):
+        for ep in tqdm(range(self.num_episodes)):
             cur_state = 0
-            for _ in range(self.maximum_steps):
+            for step in range(self.maximum_steps):
                 action = self.get_action(cur_state)
                 new_state = self.get_state_given_action(cur_state, action)
                 reward = self.reward_grid[cur_state][action]
@@ -209,57 +212,35 @@ class Q_agent():
                 # Move the agent through the maze.
                 cur_state = new_state
 
-            if _ >= self.min_convergence_steps and has_converged(Q_table_old, self.Q_table):
-                steps_to_converge = _
-                break
 
-            Q_table_old = np.copy(self.Q_table)
 
-        self.convergence_steps = steps_to_converge
+                total_steps += 1
+                if self.is_policy_optimal():
+                    break
+            
+
+
+            # Q_table_old = np.copy(self.Q_table)
+
+        self.convergence_steps = total_steps
 
                 
-                # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
-                # Eli (done above, 6/1/24, 1:33pm)
+        # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
+        # Eli (done above, 6/1/24, 1:33pm)
        
         if self.verbose:
             print(f"Q_table {self.Q_table.shape}:")
             print(self.Q_table)
             print(f"Converged in {self.convergence_steps} steps")
 
-        print('Whether the policy is optimal: ', self.is_policy_optimal())
+        assert self.is_policy_optimal() == True
+
+        # print('Whether the policy is optimal: ', self.is_policy_optimal())
+        # Save the "optimal q table"
+        self.old_q_table = self.Q_table
         if self.reliability < 1:
-            scramble_policy(self)
+            self.scramble_policy(self)
 
-
-    def eval(self):
-
-        # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
-        # TODO implement evaluation 
-        # https://colab.research.google.com/drive/1Ur_pYvL_IngmAttMBSZlBRwMNnpzQuY_#scrollTo=KASNViqL4tZn
-        # evaluate on reward over n number of episodes by actioning on the learned Q-table
-        rewards = []
-        is_optimal_policies = []
-        for _ in tqdm(range(self.num_eval_episodes)):
-            cur_state = 0  # Reset environment to initial state for each episode
-            episode_reward = 0
-            for _ in range(self.maximum_steps):
-                # Take the action (index) that have the maximum reward
-                action = np.argmax(self.Q_table[cur_state])
-                new_state = self.get_state_given_action(cur_state, action)
-                reward = self.reward_grid[cur_state][action]
-                episode_reward += reward
-                
-                if new_state == (self.size**2) - 1:
-                    break
-                cur_state = new_state
-
-            rewards.append(episode_reward)
-            is_optimal_policies.append(self.is_policy_optimal())
-
-        print('Mean rewards: ', sum(rewards)/len(rewards))
-        print('Is optimal policy: ', sum(is_optimal_policies)/len(is_optimal_policies))
-
-        return 
 
 
         # Maybe TODO - Eval using distance
