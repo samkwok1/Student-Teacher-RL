@@ -107,22 +107,84 @@ def main(args: DictConfig) -> None:
     
     Parent_Q.train()
 
+    # Init parameters
+    num_steps_to_converge = dict()
+    parent_reliabilities = np.arange(0.0, 1.0, 0.1)
+    pre_advice_epsilons= np.arange(0.2, 0.5, 0.05)
+    post_advice_weights= np.arange(0.05,0.25, 0.05)
+    num_trials = 10
 
-    for parameter in parent_reliability:
-        for num in pre_advice:
-            for trial in range(num_trials):
+    for reliability in parent_reliabilities:
+
+        # pre advice mode - varying epsilon
+        num_steps_to_converge['pre_advice'] = dict() 
+        for pre_advice_epsilon in pre_advice_epsilons:
+
+            trial_steps = []
+            for _ in range(num_trials):
                 # "Optimal policy is kept track of"
                 Parent_Q.Q_table = Parent_Q.old_q_table
-                Parent_Q.scramble_policy(reliability=Q_hyper.parent_reliability)
+                Parent_Q.scramble_policy(reliability=reliability)
                 # initialize a child 
+                Child_pre = q.Q_agent(num_states=Maze_args.size**2,
+                        num_actions=Maze_args.num_actions,
+                        gamma=Q_hyper.gamma,
+                        alpha=Q_hyper.alpha,
+                        epsilon=Q_hyper.epsilon,
+                        num_episodes=Q_hyper.num_episodes,
+                        maximum_steps=max_steps,
+                        parent=False,
+                        parent_Q_table=Parent_Q.Q_table,
+                        child=True,
+                        pre_advice=True,
+                        pre_advice_epsilon=pre_advice_epsilon,
+                        post_advice=False,
+                        post_advice_weight=False,
+                        reliability=reliability,
+                        size=Maze_args.size,
+                        grid=Maze.Grid,
+                        reward_grid=Reward_maze.reward_maze)
                 # child class - train the child on the randomly scrambled q_table
-        for num in post_advice:
-            for trial in range(num_trials):
+                Child_pre.train()
+                trial_steps.append(Child_pre.convergence_steps)
+            
+            # (reliability, pre_advice epsilon)
+            num_steps_to_converge['pre_advice'][(reliability,pre_advice_epsilon)] = trial_steps
+
+        # post advice mode - varying weight
+        num_steps_to_converge['post_advice'] = dict()
+        for post_advice_weight in post_advice_weights:
+
+            trial_steps = []
+            for _ in range(num_trials):
                 # "Optimal policy is kept track of"
                 Parent_Q.Q_table = Parent_Q.old_q_table
-                Parent_Q.scramble_policy(reliability=Q_hyper.parent_reliability)
+                Parent_Q.scramble_policy(reliability=reliability)
                 # initialize a child 
+                Child_post = q.Q_agent(num_states=Maze_args.size**2,
+                        num_actions=Maze_args.num_actions,
+                        gamma=Q_hyper.gamma,
+                        alpha=Q_hyper.alpha,
+                        epsilon=Q_hyper.epsilon,
+                        num_episodes=Q_hyper.num_episodes,
+                        maximum_steps=max_steps,
+                        parent=False,
+                        parent_Q_table=Parent_Q.Q_table,
+                        child=True,
+                        pre_advice=False,
+                        pre_advice_epsilon=False,
+                        post_advice=True,
+                        post_advice_weight=post_advice_weight,
+                        reliability=reliability,
+                        size=Maze_args.size,
+                        grid=Maze.Grid,
+                        reward_grid=Reward_maze.reward_maze)
                 # child class - train the child on the randomly scrambled q_table
+                Child_pre.train()
+                trial_steps.append(Child_pre.convergence_steps)
+            
+            # (reliability, pre_advice epsilon)
+            num_steps_to_converge['post_advice'][(reliability,post_advice_weight)] = trial_steps
 
 
     plots.plot_grid(grid=Maze.Grid)
