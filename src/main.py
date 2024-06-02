@@ -39,36 +39,6 @@ def find_maze(maze_args, verbose):
     print(f"Length of each path: {Maze.path_lengths}")
     return Maze
 
-def eval(self):
-
-    # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
-    # TODO implement evaluation 
-    # https://colab.research.google.com/drive/1Ur_pYvL_IngmAttMBSZlBRwMNnpzQuY_#scrollTo=KASNViqL4tZn
-    # evaluate on reward over n number of episodes by actioning on the learned Q-table
-    rewards = []
-    is_optimal_policies = []
-    for _ in tqdm(range(self.num_eval_episodes)):
-        cur_state = 0  # Reset environment to initial state for each episode
-        episode_reward = 0
-        for _ in range(self.maximum_steps):
-            # Take the action (index) that have the maximum reward
-            action = np.argmax(self.Q_table[cur_state])
-            new_state = self.get_state_given_action(cur_state, action)
-            reward = self.reward_grid[cur_state][action]
-            episode_reward += reward
-            
-            if new_state == (self.size**2) - 1:
-                break
-            cur_state = new_state
-
-        rewards.append(episode_reward)
-        is_optimal_policies.append(self.is_policy_optimal())
-
-    print('Mean rewards: ', sum(rewards)/len(rewards))
-    print('Is optimal policy: ', sum(is_optimal_policies)/len(is_optimal_policies))
-
-    return 
-
 @hydra.main(config_path="config", config_name="config")
 def main(args: DictConfig) -> None:
     verbose = args.sim.verbose
@@ -90,8 +60,8 @@ def main(args: DictConfig) -> None:
                          gamma=Q_hyper.gamma,
                          alpha=Q_hyper.alpha,
                          epsilon=Q_hyper.epsilon,
-                         num_episodes=Q_hyper.num_episodes,
-                         maximum_steps=max_steps,
+                         num_episodes=Q_hyper.num_episodes * 10,
+                         maximum_steps=max_steps + 1000,
                          parent=True,
                          parent_Q_table=np.zeros((1, 1)),
                          child=False,
@@ -103,9 +73,7 @@ def main(args: DictConfig) -> None:
                          grid=Maze.Grid,
                          reward_grid=Reward_maze.reward_maze,
                          verbose=verbose,
-                         shortest_path_length=min_steps,
-                         convergence_threshold=0.001,
-                         min_convergence_steps=1)
+                         shortest_path_length=min_steps)
     
     Parent_Q.train()
 
@@ -126,8 +94,10 @@ def main(args: DictConfig) -> None:
             trial_steps = []
             for _ in tqdm(range(num_trials)):
                 # "Optimal policy is kept track of"
-                Parent_Q.Q_table = Parent_Q.old_q_table
+                Parent_Q.Q_table = Parent_Q.Q_optimal
                 Parent_Q.scramble_policy(reliability=reliability)
+                assert Parent_Q.Q_optimal.all() != Parent_Q.Q_table.all()
+
                 # initialize a child 
                 Child_pre = q.Q_agent(num_states=Maze_args.size**2,
                         num_actions=Maze_args.num_actions,
@@ -153,7 +123,7 @@ def main(args: DictConfig) -> None:
                 # child class - train the child on the randomly scrambled q_table
                 Child_pre.train()
                 trial_steps.append(Child_pre.convergence_steps)
-            
+                prev_table = Parent_Q.Q_table
             # (reliability, pre_advice epsilon)
             num_steps_to_converge['pre_advice'][reliability][pre_advice_epsilon] = trial_steps
 
