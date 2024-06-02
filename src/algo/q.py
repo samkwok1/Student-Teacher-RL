@@ -76,92 +76,93 @@ class Q_agent():
         self.min_convergence_steps = min_convergence_steps
         self.convergence_steps = None
 
-    def train(self):
 
-        def get_state_given_action(state, action):
-            #         1 
-            #         ^
-            #         |
-            #    0 <–   -> 2
-            #         |
-            #         <
-            #         3
-            # If there's a wall, and the agent tries to walk into it, put them in the same spot
-            # Otherwise, update their location
-            loc_x, loc_y = state // self.size, state % self.size
+    def get_state_given_action(self, state, action):
+        #         1 
+        #         ^
+        #         |
+        #    0 <–   -> 2
+        #         |
+        #         <
+        #         3
+        # If there's a wall, and the agent tries to walk into it, put them in the same spot
+        # Otherwise, update their location
+        loc_x, loc_y = state // self.size, state % self.size
 
-            if action == 0:
-                 if loc_y == 0 or self.grid[loc_x][loc_y - 1] == 0:
-                     return state
-                 return state - 1
-            if action == 1:
-                if loc_x == 0 or self.grid[loc_x - 1][loc_y] == 0:
+        if action == 0:
+                if loc_y == 0 or self.grid[loc_x][loc_y - 1] == 0:
                     return state
-                return state - self.size
-            if action == 2:
-                if loc_y == self.size - 1 or self.grid[loc_x][loc_y + 1] == 0:
-                    return state
-                return state + 1
-            if action == 3:
-                if loc_x == self.size - 1 or self.grid[loc_x + 1][loc_y] == 0:
-                    return state
-                return state + self.size
-            
-        def get_action(cur_state):
-            # Gets the actions according to the agent's properties.
-            actions = [0, 1, 2, 3]
-            random_number = random.uniform(0, 1)
-            if random_number < self.epsilon:
-                normal_action = random.choice(actions)
+                return state - 1
+        if action == 1:
+            if loc_x == 0 or self.grid[loc_x - 1][loc_y] == 0:
+                return state
+            return state - self.size
+        if action == 2:
+            if loc_y == self.size - 1 or self.grid[loc_x][loc_y + 1] == 0:
+                return state
+            return state + 1
+        if action == 3:
+            if loc_x == self.size - 1 or self.grid[loc_x + 1][loc_y] == 0:
+                return state
+            return state + self.size
+
+    def get_action(self, cur_state):
+        # Gets the actions according to the agent's properties.
+        actions = [0, 1, 2, 3]
+        random_number = random.uniform(0, 1)
+        if random_number < self.epsilon:
+            normal_action = random.choice(actions)
+        else:
+            normal_action = np.argmax(self.Q_table[cur_state])
+        # If the agent is a parent or its a child that gets post-action advice, have it choose an action the
+        # normal way, as defined by epsilon greedy.
+        if self.parent or (self.post_advice and self.child):
+            action = normal_action
+        # If the agent is a pre-advice child...
+        elif self.child and self.pre_advice:
+            # ...have it choose an action if it is more than pre_advice_epsilon% unsure about
+            # which action to choose (if it doesn't have a Q value that holds more than 50% of the probability
+            # mass for its current state) then have it choose the action the parent recommends. Otherwise, 
+            # have it choose normally (as according to epsilon greedy)
+            dist = special.softmax(self.Q_table[cur_state])
+            if max(dist) < self.pre_advice_epsilon:
+                action = np.argmax(self.parent_Q_table[cur_state])
+            # Have it choose normally
             else:
-                normal_action = np.argmax(self.Q_table[cur_state])
-            # If the agent is a parent or its a child that gets post-action advice, have it choose an action the
-            # normal way, as defined by epsilon greedy.
-            if self.parent or (self.post_advice and self.child):
                 action = normal_action
-            # If the agent is a pre-advice child...
-            elif self.child and self.pre_advice:
-                # ...have it choose an action if it is more than pre_advice_epsilon% unsure about
-                # which action to choose (if it doesn't have a Q value that holds more than 50% of the probability
-                # mass for its current state) then have it choose the action the parent recommends. Otherwise, 
-                # have it choose normally (as according to epsilon greedy)
-                dist = special.softmax(self.Q_table[cur_state])
-                if max(dist) < self.pre_advice_epsilon:
-                    action = np.argmax(self.parent_Q_table[cur_state])
-                # Have it choose normally
-                else:
-                    action = normal_action
-            return action
+        return action
+
+    # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
+    def is_policy_optimal(self):
+        if not self.parent:
+            return False
+
+        cur_state = 0
+        path_length = 0
+        visited_states = set()
+
+        while cur_state != (self.size**2 - 1):
+            action = np.argmax(self.Q_table[cur_state])
+            new_state = self.get_state_given_action(cur_state, action)
+            if new_state in visited_states:
+                return False
+            visited_states.add(new_state)
+            path_length += 1
+            cur_state = new_state
+            if path_length > self.shortest_path_length:
+                return False
+        
+        return path_length + 1 == self.shortest_path_length
+     
+
+    def train(self):
 
 
         def has_converged(Q_table_old, Q_table_new):
             return np.max(np.abs(Q_table_old - Q_table_new)) < self.convergence_threshold
 
         Q_table_old = np.copy(self.Q_table)
-        steps_to_converge = 0
-
-        # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
-        def is_policy_optimal(self):
-            if not self.parent:
-                return False
-
-            cur_state = 0
-            path_length = 0
-            visited_states = set()
-
-            while cur_state != (self.size**2 - 1):
-                action = np.argmax(self.Q_table[cur_state])
-                new_state = self.get_state_given_action(cur_state, action)
-                if new_state in visited_states:
-                    return False
-                visited_states.add(new_state)
-                path_length += 1
-                cur_state = new_state
-                if path_length > self.shortest_path_length:
-                    return False
-
-            return path_length == self.shortest_path_length
-        
+        steps_to_converge = 0   
 
         # TODO here - if the agent is a parent, scramble the "optimal policy" in its Q-table
         # the logic here is that we calcuate the number of states to be scrambled based on the reliability score, then randomly select the states 
@@ -192,8 +193,8 @@ class Q_agent():
         for _ in tqdm(range(self.num_episodes)):
             cur_state = 0
             for _ in range(self.maximum_steps):
-                action = get_action(cur_state)
-                new_state = get_state_given_action(cur_state, action)
+                action = self.get_action(cur_state)
+                new_state = self.get_state_given_action(cur_state, action)
                 reward = self.reward_grid[cur_state][action]
                 # If the agent is a post-action advice child, then incorporate the KL divergence term to weigh its action probability distribution
                 # against the parent's probability distribution for the previous state, not the newly picked state.
@@ -225,52 +226,26 @@ class Q_agent():
             print(self.Q_table)
             print(f"Converged in {self.convergence_steps} steps")
 
+        print('Whether the policy is optimal: ', self.is_policy_optimal())
+        if self.reliability < 1:
+            scramble_policy(self)
+
 
     def eval(self):
-
-        def get_state_given_action(state, action):
-            #         1 
-            #         ^
-            #         |
-            #    0 <–   -> 2
-            #         |
-            #         <
-            #         3
-            # If there's a wall, and the agent tries to walk into it, put them in the same spot
-            # Otherwise, update their location
-            loc_x, loc_y = state // self.size, state % self.size
-
-            if action == 0:
-                 if loc_y == 0 or self.grid[loc_x][loc_y - 1] == 0:
-                     return state
-                 return state - 1
-            if action == 1:
-                if loc_x == 0 or self.grid[loc_x - 1][loc_y] == 0:
-                    return state
-                return state - self.size
-            if action == 2:
-                if loc_y == self.size - 1 or self.grid[loc_x][loc_y + 1] == 0:
-                    return state
-                return state + 1
-            if action == 3:
-                if loc_x == self.size - 1 or self.grid[loc_x + 1][loc_y] == 0:
-                    return state
-                return state + self.size
-            
 
         # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
         # TODO implement evaluation 
         # https://colab.research.google.com/drive/1Ur_pYvL_IngmAttMBSZlBRwMNnpzQuY_#scrollTo=KASNViqL4tZn
         # evaluate on reward over n number of episodes by actioning on the learned Q-table
         rewards = []
+        is_optimal_policies = []
         for _ in tqdm(range(self.num_eval_episodes)):
             cur_state = 0  # Reset environment to initial state for each episode
             episode_reward = 0
-
             for _ in range(self.maximum_steps):
                 # Take the action (index) that have the maximum reward
                 action = np.argmax(self.Q_table[cur_state])
-                new_state = get_state_given_action(cur_state, action)
+                new_state = self.get_state_given_action(cur_state, action)
                 reward = self.reward_grid[cur_state][action]
                 episode_reward += reward
                 
@@ -279,6 +254,10 @@ class Q_agent():
                 cur_state = new_state
 
             rewards.append(episode_reward)
+            is_optimal_policies.append(self.is_policy_optimal())
+
+        print('Mean rewards: ', sum(rewards)/len(rewards))
+        print('Is optimal policy: ', sum(is_optimal_policies)/len(is_optimal_policies))
 
         return 
 

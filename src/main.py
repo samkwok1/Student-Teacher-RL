@@ -71,7 +71,10 @@ def main(args: DictConfig) -> None:
                          size=Maze_args.size,
                          grid=Maze.Grid,
                          reward_grid=Reward_maze.reward_maze,
-                         verbose=verbose)
+                         verbose=verbose,
+                         shortest_path_length=min_steps,
+                         convergence_threshold=0.001,
+                         min_convergence_steps=1)
     
     Parent_Q.train()
     Parent_Q.eval()

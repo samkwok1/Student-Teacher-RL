@@ -1,7 +1,7 @@
 sim:
   sim_dir: None
   sim_id: None
-  verbose: false
+  verbose: true
 Maze:
   size: 10
   num_actions: 4
