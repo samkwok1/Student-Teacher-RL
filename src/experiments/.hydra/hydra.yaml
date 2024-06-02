@@ -111,12 +111,11 @@ hydra:
   overrides:
     hydra:
     - hydra.mode=RUN
-    task:
-    - sim.verbose=True
+    task: []
   job:
     name: main
     chdir: null
-    override_dirname: sim.verbose=True
+    override_dirname: ''
     id: ???
     num: ???
     config_name: config
@@ -130,18 +129,18 @@ hydra:
   runtime:
     version: 1.3.2
     version_base: '1.1'
-    cwd: /Users/qingyang/Files/classes/educ234/Student-Teacher-RL/src
+    cwd: /Users/Sam/Desktop/Student-Teacher-RL/src
     config_sources:
     - path: hydra.conf
       schema: pkg
       provider: hydra
-    - path: /Users/qingyang/Files/classes/educ234/Student-Teacher-RL/src/config
+    - path: /Users/Sam/Desktop/Student-Teacher-RL/src/config
       schema: file
       provider: main
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /Users/qingyang/Files/classes/educ234/Student-Teacher-RL/src/experiments
+    output_dir: /Users/Sam/Desktop/Student-Teacher-RL/src/experiments
     choices:
       hydra/env: default
       hydra/callbacks: null

@@ -26,7 +26,6 @@ class Q_agent():
                  pre_advice_epsilon: int,
                  post_advice: bool,
                  post_advice_weight: float,
-                 reliability: int,
                  size: int,
                  grid: np.ndarray,
                  reward_grid: np.ndarray,
@@ -63,7 +62,6 @@ class Q_agent():
         self.post_advice_weight = post_advice_weight
 
         # How reliable the agent is, if it's a parent agent
-        self.reliability=reliability
         # Note that it may seem like we have many more hyperparameters that necessary. For instance, if we're
         # training a parent, why do we need to distinguish whether the parent is pre_advice or post_advice? 
         # Doesn't this only apply to the agent if the agent is a child? This is a design choice just to make them all
@@ -192,6 +190,7 @@ class Q_agent():
         # to be scrambled. For each state, we take out the optimal action and change it to one of the sub-optimal actions (again by choosing randomly)
         
         total_steps = 0
+        indicate = False
         # Traditional Q-learning algorithm
         for ep in tqdm(range(self.num_episodes)):
             cur_state = 0
@@ -213,14 +212,15 @@ class Q_agent():
                 cur_state = new_state
 
                 total_steps += 1
-                if self.is_policy_optimal():
-                    break
+                if self.is_policy_optimal() and not indicate:
+                    indicate = True
+                    self.convergence_steps = total_steps
             
 
 
             # Q_table_old = np.copy(self.Q_table)
 
-        self.convergence_steps = total_steps
+        # self.convergence_steps = total_steps
 
                 
         # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
@@ -235,7 +235,8 @@ class Q_agent():
 
         # print('Whether the policy is optimal: ', self.is_policy_optimal())
         # Save the "optimal q table"
-        self.old_q_table = self.Q_table
+        print(self.Q_table)
+        self.old_q_table = self.Q_table.copy()
 
 
 

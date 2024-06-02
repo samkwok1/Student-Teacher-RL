@@ -1,7 +1,7 @@
 sim:
   sim_dir: None
   sim_id: None
-  verbose: true
+  verbose: false
 Maze:
   size: 10
   num_actions: 4
@@ -10,7 +10,7 @@ Q_hyper:
   gamma: 0.9
   alpha: 0.1
   epsilon: 0.1
-  num_episodes: 1000
+  num_episodes: 10000
   num_eval_episodes: 100
   parent_reliability: 1
 Child_params:
