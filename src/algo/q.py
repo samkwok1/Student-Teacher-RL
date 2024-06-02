@@ -17,7 +17,6 @@ class Q_agent():
                  alpha: float, 
                  epsilon: float, 
                  num_episodes: int, 
-                 num_eval_episodes: int,
                  maximum_steps: int,
                  parent: bool,
                  parent_Q_table: np.ndarray,
@@ -40,7 +39,6 @@ class Q_agent():
         self.alpha = alpha
         self.epsilon = epsilon
         self.num_episodes = num_episodes
-        self.num_eval_episodes = num_eval_episodes
         self.maximum_steps = maximum_steps
 
         # The grid, reward grid, and the size of the grid
