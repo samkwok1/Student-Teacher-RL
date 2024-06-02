@@ -5,6 +5,9 @@ from algo import q
 from util import plots
 import numpy as np
 from tqdm import tqdm
+import pdb 
+import random
+import json
 
 RANDOM_SEEDS = {
     9:5,
@@ -73,17 +76,19 @@ def main(args: DictConfig) -> None:
                          shortest_path_length=min_steps)
     
     Parent_Q.train()
+
+    # Init for results -  a nested dict with pre/post - reliability - parameter
+    num_steps_to_converge =  {'pre_advice': {}, 'post_advice': {}}
+
     # Init parameters
-    num_steps_to_converge = dict()
-    parent_reliabilities = np.arange(0.7, 1.0, 0.1)
-    pre_advice_epsilons= np.arange(0.2, 0.5, 0.05)
-    post_advice_weights= np.arange(0.05,0.25, 0.05)
+    parent_reliabilities=[1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+    pre_advice_epsilons=[0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+    post_advice_weights=[0.05, 0.1, 0.15, 0.2]
     num_trials = 10
 
     for reliability in parent_reliabilities:
-        print('reliability: ', reliability)
         # pre advice mode - varying epsilon
-        num_steps_to_converge['pre_advice'] = dict() 
+        num_steps_to_converge['pre_advice'][reliability] = dict()
         for pre_advice_epsilon in pre_advice_epsilons:
             print('   pre_advice_epsilon: ', pre_advice_epsilon)
             trial_steps = []
@@ -120,14 +125,14 @@ def main(args: DictConfig) -> None:
                 trial_steps.append(Child_pre.convergence_steps)
                 prev_table = Parent_Q.Q_table
             # (reliability, pre_advice epsilon)
-            num_steps_to_converge['pre_advice'][(reliability,pre_advice_epsilon)] = trial_steps
+            num_steps_to_converge['pre_advice'][reliability][pre_advice_epsilon] = trial_steps
 
         # post advice mode - varying weight
-        num_steps_to_converge['post_advice'] = dict()
+        num_steps_to_converge['post_advice'][reliability] = dict()
         for post_advice_weight in post_advice_weights:
-
+            print('   post_advice_weight: ', post_advice_weight)
             trial_steps = []
-            for _ in range(num_trials):
+            for _ in tqdm(range(num_trials)):
                 # "Optimal policy is kept track of"
                 Parent_Q.Q_table = Parent_Q.old_q_table
                 Parent_Q.scramble_policy(reliability=reliability)
@@ -158,8 +163,12 @@ def main(args: DictConfig) -> None:
                 trial_steps.append(Child_pre.convergence_steps)
             
             # (reliability, pre_advice epsilon)
-            num_steps_to_converge['post_advice'][(reliability,post_advice_weight)] = trial_steps
+            num_steps_to_converge['post_advice'][reliability][post_advice_weight] = trial_steps
 
+    with open('res.json', 'w') as f: 
+        json.dump(num_steps_to_converge, f, indent=4)
+
+    plots.plot_grid(grid=Maze.Grid)
     # # Init Child agent - PRE-advice
     # max_steps = max(Maze.path_lengths)
     # Q_hyper = args.Q_hyper

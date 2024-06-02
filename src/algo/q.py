@@ -128,6 +128,12 @@ class Q_agent():
 
     # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
     def is_policy_optimal(self):
+<<<<<<< HEAD
+        # if not self.parent:
+        #     return False
+
+=======
+>>>>>>> 1181f36d0c39bba75a18796197f2c0aa2c56ab68
         cur_state = 0
         path_length = 0
         visited_states = set()
@@ -142,7 +148,7 @@ class Q_agent():
             cur_state = new_state
             if path_length > self.shortest_path_length:
                 return False
-        
+
         return path_length + 1 == self.shortest_path_length
      
     def scramble_policy(self, reliability):
@@ -191,7 +197,7 @@ class Q_agent():
         total_steps = 0
         indicate = False
         # Traditional Q-learning algorithm
-        for ep in tqdm(range(self.num_episodes)):
+        for ep in range(self.num_episodes):
             cur_state = 0
             for step in range(self.maximum_steps):
                 action = self.get_action(cur_state)
@@ -230,10 +236,21 @@ class Q_agent():
             print(self.Q_table)
             print(f"Converged in {self.convergence_steps} steps")
 
+<<<<<<< HEAD
+        if not self.is_policy_optimal():
+            pdb.set_trace()
+        assert self.is_policy_optimal() == True
+
+        # print('Whether the policy is optimal: ', self.is_policy_optimal())
+        # Save the "optimal q table"
+        # print(self.Q_table)
+        self.old_q_table = self.Q_table.copy()
+=======
         if self.is_policy_optimal():
             print('Whether the policy is optimal: ', self.is_policy_optimal())
             if self.parent:
                 self.Q_optimal = self.Q_table.copy()
+>>>>>>> 1181f36d0c39bba75a18796197f2c0aa2c56ab68
 
 
 
