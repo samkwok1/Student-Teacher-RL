@@ -3,6 +3,7 @@ import numpy as np
 import pandas
 import random
 import time
+import pdb
 from tqdm import tqdm
 from scipy import special
 from scipy.stats import entropy
@@ -16,6 +17,7 @@ class Q_agent():
                  alpha: float, 
                  epsilon: float, 
                  num_episodes: int, 
+                 num_eval_episodes: int,
                  maximum_steps: int,
                  parent: bool,
                  parent_Q_table: np.ndarray,
@@ -28,14 +30,18 @@ class Q_agent():
                  size: int,
                  grid: np.ndarray,
                  reward_grid: np.ndarray,
+                 verbose: bool,
                  shortest_path_length = float, # when initializing the agent do "shortest_path_length = maze_instance.calculate_shortest_path_length"
-                 verbose: bool):
+                 convergence_threshold: float,
+                 min_convergence_steps: int
+                 ):
         # Hyperparameters related to the Q update rule (you can find it online)
         self.Q_table = np.zeros((num_states, num_actions))
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
         self.num_episodes = num_episodes
+        self.num_eval_episodes = num_eval_episodes
         self.maximum_steps = maximum_steps
 
         # The grid, reward grid, and the size of the grid
@@ -65,6 +71,10 @@ class Q_agent():
         # When these unused values are passed in in main.py, they're just garbage values.
         self.shortest_path_length = shortest_path_length
         self.verbose = verbose
+
+        self.convergence_threshold = convergence_threshold
+        self.min_convergence_steps = min_convergence_steps
+        self.convergence_steps = None
 
     def train(self):
 
@@ -124,33 +134,11 @@ class Q_agent():
             return action
 
 
+        def has_converged(Q_table_old, Q_table_new):
+            return np.max(np.abs(Q_table_old - Q_table_new)) < self.convergence_threshold
 
-        # Traditional Q-learning algorithm
-        for _ in tqdm(range(self.num_episodes)):
-            cur_state = 0
-            for _ in range(self.maximum_steps):
-                action = get_action(cur_state)
-                new_state = get_state_given_action(cur_state, action)
-                reward = self.reward_grid[cur_state][action]
-                # If the agent is a post-action advice child, then incorporate the KL divergence term to weigh its action probability distribution
-                # against the parent's probability distribution for the previous state, not the newly picked state.
-                if self.child and self.post_advice:
-                    reward -= self.post_advice_weight * entropy(special.softmax(self.Q_table[cur_state]), special.softmax(self.parent_Q_table[cur_state]))
-
-                self.Q_table[cur_state][action] += self.alpha * (reward + self.gamma * max(self.Q_table[new_state]) - self.Q_table[cur_state][action])
-                
-                # If the agent has made it to the end, break
-                if new_state == (self.size**2) - 1:
-                    break
-                # Move the agent through the maze.
-                cur_state = new_state
-
-                # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
-                # Eli
-                
-        if self.verbose:
-            print("Q_table:")
-            print(self.Q_table)
+        Q_table_old = np.copy(self.Q_table)
+        steps_to_converge = 0
 
         # if the agent is a parent, see whether the policy actually is optimal (returns True if optimal)
         def is_policy_optimal(self):
@@ -200,17 +188,107 @@ class Q_agent():
                 # Increase the Q-value of the new action to make it the new optimal
                 self.Q_table[state][new_action] = current_optimal_value * 1.1  # Boost to ensure it's the new max
         
+        # Traditional Q-learning algorithm
+        for _ in tqdm(range(self.num_episodes)):
+            cur_state = 0
+            for _ in range(self.maximum_steps):
+                action = get_action(cur_state)
+                new_state = get_state_given_action(cur_state, action)
+                reward = self.reward_grid[cur_state][action]
+                # If the agent is a post-action advice child, then incorporate the KL divergence term to weigh its action probability distribution
+                # against the parent's probability distribution for the previous state, not the newly picked state.
+                if self.child and self.post_advice:
+                    reward -= self.post_advice_weight * entropy(special.softmax(self.Q_table[cur_state]), special.softmax(self.parent_Q_table[cur_state]))
+
+                self.Q_table[cur_state][action] += self.alpha * (reward + self.gamma * max(self.Q_table[new_state]) - self.Q_table[cur_state][action])
+                
+                # If the agent has made it to the end, break
+                if new_state == (self.size**2) - 1:
+                    break
+                # Move the agent through the maze.
+                cur_state = new_state
+
+            if _ >= self.min_convergence_steps and has_converged(Q_table_old, self.Q_table):
+                steps_to_converge = _
+                break
+
+            Q_table_old = np.copy(self.Q_table)
+
+        self.convergence_steps = steps_to_converge
+
+                
+                # TODO here - eval whether current Q_table is optimal, if it is, record the number of steps it took to converge, store that in a parameters
+                # Eli (done above, 6/1/24, 1:33pm)
+       
+        if self.verbose:
+            print(f"Q_table {self.Q_table.shape}:")
+            print(self.Q_table)
+            print(f"Converged in {self.convergence_steps} steps")
+
 
     def eval(self):
-        pass
+
+        def get_state_given_action(state, action):
+            #         1 
+            #         ^
+            #         |
+            #    0 <–   -> 2
+            #         |
+            #         <
+            #         3
+            # If there's a wall, and the agent tries to walk into it, put them in the same spot
+            # Otherwise, update their location
+            loc_x, loc_y = state // self.size, state % self.size
+
+            if action == 0:
+                 if loc_y == 0 or self.grid[loc_x][loc_y - 1] == 0:
+                     return state
+                 return state - 1
+            if action == 1:
+                if loc_x == 0 or self.grid[loc_x - 1][loc_y] == 0:
+                    return state
+                return state - self.size
+            if action == 2:
+                if loc_y == self.size - 1 or self.grid[loc_x][loc_y + 1] == 0:
+                    return state
+                return state + 1
+            if action == 3:
+                if loc_x == self.size - 1 or self.grid[loc_x + 1][loc_y] == 0:
+                    return state
+                return state + self.size
+            
+
         # TODO here - Search hyperparameter space for pre-advice and post-advice child stuff
-        # Ashley
+        # TODO implement evaluation 
+        # https://colab.research.google.com/drive/1Ur_pYvL_IngmAttMBSZlBRwMNnpzQuY_#scrollTo=KASNViqL4tZn
+        # evaluate on reward over n number of episodes by actioning on the learned Q-table
+        rewards = []
+        for _ in tqdm(range(self.num_eval_episodes)):
+            cur_state = 0  # Reset environment to initial state for each episode
+            episode_reward = 0
+
+            for _ in range(self.maximum_steps):
+                # Take the action (index) that have the maximum reward
+                action = np.argmax(self.Q_table[cur_state])
+                new_state = get_state_given_action(cur_state, action)
+                reward = self.reward_grid[cur_state][action]
+                episode_reward += reward
+                
+                if new_state == (self.size**2) - 1:
+                    break
+                cur_state = new_state
+
+            rewards.append(episode_reward)
+
+        return 
+
+
         # Maybe TODO - Eval using distance
+    
+
         # TODO - plot the graphs
         # Sam
-
         
-
 
 def main():
     pass
