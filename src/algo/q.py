@@ -32,8 +32,8 @@ class Q_agent():
                  reward_grid: np.ndarray,
                  verbose: bool,
                  shortest_path_length = float, # when initializing the agent do "shortest_path_length = maze_instance.calculate_shortest_path_length"
-                 convergence_threshold: float,
-                 min_convergence_steps: int
+                 convergence_threshold = float,
+                 min_convergence_steps = int
                  ):
         # Hyperparameters related to the Q update rule (you can find it online)
         self.Q_table = np.zeros((num_states, num_actions))
