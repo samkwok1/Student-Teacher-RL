@@ -97,7 +97,6 @@ def main(args: DictConfig) -> None:
                          pre_advice_epsilon=0,
                          post_advice=False,
                          post_advice_weight=0,
-                         reliability=Q_hyper.parent_reliability,
                          size=Maze_args.size,
                          grid=Maze.Grid,
                          reward_grid=Reward_maze.reward_maze,
@@ -108,8 +107,23 @@ def main(args: DictConfig) -> None:
     
     Parent_Q.train()
 
-    for trial in range(num_trials):
-        
+
+    for parameter in parent_reliability:
+        for num in pre_advice:
+            for trial in range(num_trials):
+                # "Optimal policy is kept track of"
+                Parent_Q.Q_table = Parent_Q.old_q_table
+                Parent_Q.scramble_policy(reliability=Q_hyper.parent_reliability)
+                # initialize a child 
+                # child class - train the child on the randomly scrambled q_table
+        for num in post_advice:
+            for trial in range(num_trials):
+                # "Optimal policy is kept track of"
+                Parent_Q.Q_table = Parent_Q.old_q_table
+                Parent_Q.scramble_policy(reliability=Q_hyper.parent_reliability)
+                # initialize a child 
+                # child class - train the child on the randomly scrambled q_table
+
 
     plots.plot_grid(grid=Maze.Grid)
     # # Init Child agent - PRE-advice

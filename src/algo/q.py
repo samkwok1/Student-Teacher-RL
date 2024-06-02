@@ -155,11 +155,11 @@ class Q_agent():
         
         return path_length + 1 == self.shortest_path_length
      
-    def scramble_policy(self):
+    def scramble_policy(self, reliability):
         if not self.parent:
             return  # Only scramble if the agent is a parent
 
-        num_states_to_scramble = int((1 - self.reliability) * self.Q_table.shape[0])
+        num_states_to_scramble = int((1 - reliability) * self.Q_table.shape[0])
         states_to_scramble = random.sample(range(self.Q_table.shape[0]), num_states_to_scramble)
 
         for state in states_to_scramble:
@@ -212,8 +212,6 @@ class Q_agent():
                 # Move the agent through the maze.
                 cur_state = new_state
 
-
-
                 total_steps += 1
                 if self.is_policy_optimal():
                     break
@@ -238,8 +236,6 @@ class Q_agent():
         # print('Whether the policy is optimal: ', self.is_policy_optimal())
         # Save the "optimal q table"
         self.old_q_table = self.Q_table
-        if self.reliability < 1:
-            self.scramble_policy(self)
 
 
 
