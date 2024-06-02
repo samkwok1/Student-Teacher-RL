@@ -2,7 +2,7 @@
 
 #!/bin/bash
 # chmod +x run_exp.sh
-# run_exp.sh
+# ./run_exp.sh
 
 # Define hyperparameters for tuning
 # gamma: 0.9
@@ -21,9 +21,9 @@ for parent_reliability in "${parent_reliabilities[@]}"; do
 
         # Run your Python script with parameters
         python3 main.py \
-            --Q_hyper.parent_reliability=$parent_reliability \
-            --Child_params.pre_advice_epsilon=$pre_advice_epsilon \
-            --exp_name=$exp_name
+            Q_hyper.parent_reliability=$parent_reliability \
+            Child_params.pre_advice_epsilon=$pre_advice_epsilon \
+            exp_name=$exp_name
 
     done
 done
