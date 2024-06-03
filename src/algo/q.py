@@ -150,15 +150,14 @@ class Q_agent():
         # if not self.parent:
         #     return  # Only scramble if the agent is a parent
 
-        num_states_to_scramble = int((1 - reliability) * self.Q_table.shape[0])  
-
         non_zero = []
         for state in range(self.Q_table.shape[0]):
             if not all(x == 0 for x in self.Q_table[state]):
                 non_zero.append(state)
 
-        states_to_scramble = random.sample(non_zero, num_states_to_scramble)
+        num_states_to_scramble = int((1 - reliability) * len(non_zero))  
 
+        states_to_scramble = random.sample(non_zero, num_states_to_scramble)
 
         for state in states_to_scramble:
             optimal_action = np.argmax(self.Q_table[state])
@@ -231,6 +230,9 @@ class Q_agent():
             print(self.Q_table)
             print(f"Converged in {self.convergence_steps} steps")
 
+        # print('Whether the policy is optimal: ', self.is_policy_optimal())
+        # Save the "optimal q table"
+        # print(self.Q_table)
         if self.is_policy_optimal():
             print('Whether the policy is optimal: ', self.is_policy_optimal())
             if self.parent:
