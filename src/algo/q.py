@@ -8,6 +8,7 @@ from tqdm import tqdm
 from scipy import special
 from scipy.stats import entropy
 from util.plots import plot_grid
+import copy
 
 class Q_agent():
     # Seems like a lot of hyperparameters
@@ -233,9 +234,7 @@ class Q_agent():
         if self.is_policy_optimal():
             print('Whether the policy is optimal: ', self.is_policy_optimal())
             if self.parent:
-                self.Q_optimal = self.Q_table.copy()
-
-
+                self.Q_optimal = copy.deepcopy(self.Q_table)
 
         # Maybe TODO - Eval using distance
     

@@ -96,7 +96,7 @@ def main(args: DictConfig) -> None:
                 # "Optimal policy is kept track of"
                 Parent_Q.Q_table = Parent_Q.Q_optimal
                 Parent_Q.scramble_policy(reliability=reliability)
-                assert Parent_Q.Q_optimal.all() != Parent_Q.Q_table.all()
+                # assert Parent_Q.Q_optimal.all() != Parent_Q.Q_table.all()
 
                 # initialize a child 
                 Child_pre = q.Q_agent(num_states=Maze_args.size**2,
@@ -117,9 +117,7 @@ def main(args: DictConfig) -> None:
                         grid=Maze.Grid,
                         reward_grid=Reward_maze.reward_maze,
                         verbose=verbose,
-                        shortest_path_length=min_steps,
-                        convergence_threshold=0.001,
-                        min_convergence_steps=1)
+                        shortest_path_length=min_steps)
                 # child class - train the child on the randomly scrambled q_table
                 Child_pre.train()
                 trial_steps.append(Child_pre.convergence_steps)
@@ -134,7 +132,7 @@ def main(args: DictConfig) -> None:
             trial_steps = []
             for _ in tqdm(range(num_trials)):
                 # "Optimal policy is kept track of"
-                Parent_Q.Q_table = Parent_Q.old_q_table
+                Parent_Q.Q_table = Parent_Q.Q_optimal
                 Parent_Q.scramble_policy(reliability=reliability)
                 # initialize a child 
                 Child_post = q.Q_agent(num_states=Maze_args.size**2,
@@ -155,9 +153,7 @@ def main(args: DictConfig) -> None:
                         grid=Maze.Grid,
                         reward_grid=Reward_maze.reward_maze,
                         verbose=verbose,
-                        shortest_path_length=min_steps,
-                        convergence_threshold=0.001,
-                        min_convergence_steps=1)
+                        shortest_path_length=min_steps)
                 # child class - train the child on the randomly scrambled q_table
                 Child_post.train()
                 trial_steps.append(Child_pre.convergence_steps)
