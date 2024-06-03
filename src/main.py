@@ -156,7 +156,7 @@ def main(args: DictConfig) -> None:
                         shortest_path_length=min_steps)
                 # child class - train the child on the randomly scrambled q_table
                 Child_post.train()
-                trial_steps.append(Child_pre.convergence_steps)
+                trial_steps.append(Child_post.convergence_steps)
             
             # (reliability, pre_advice epsilon)
             num_steps_to_converge['post_advice'][reliability][post_advice_weight] = trial_steps
