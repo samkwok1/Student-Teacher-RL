@@ -118,6 +118,51 @@ def plot_policy_graph(
                             directory="plots"
                             )
 
+def plot_proposal_line_graph(ax: Axes,
+                             x: list,
+                             graph_title: str,
+                             xlabel: str,
+                             ylabel: str,
+                             directory: str,
+                             font_family: str = 'Avenir',
+                             font_size: int = 24,
+                             y_label_coords: Tuple[float, float] = (-0.07, 0.5),
+                             y_ticks: List[int] = [0, 4000, 8000, 12000, 16000, 20000],
+                             y_ticklabels: List[str] = [0, '4k', '8k', '12k', '16k', '20k'],
+                             y_lim: Tuple[float, float] = (-0.1, 20001),
+                             legend: bool = False,
+                             legend_title: str = 'Agent',
+                             legend_loc: str = 'center left',
+                             bbox_to_anchor: Tuple[float, float] = (1.0, 0.6),
+                             ):
+
+    plt.xlabel(xlabel, family=font_family, size=font_size)
+    sns.despine(left=True, bottom=False)
+    ax.set_xticks(range(len(x)))
+    ax.set_xticklabels(x, fontsize=font_size)
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True)) 
+
+    ax.set_ylabel(ylabel, family=font_family, size=font_size)
+    ax.yaxis.set_label_coords(*y_label_coords)
+    ax.set_yticks(y_ticks)
+    ax.set_yticklabels(y_ticklabels, size=font_size)
+    ax.yaxis.grid(True, linestyle='-', which='major', color='lightgrey', alpha=0.5, zorder=-100)
+    plt.ylim(y_lim)
+    plt.subplots_adjust(left=0.1, right=0.8)
+
+    plt.title(" ".join(graph_title.split('_')), family=font_family, size=font_size + 5)
+    if legend:
+        ax.legend(title=legend_title, 
+                  frameon=False,
+                  ncol=1, 
+                  bbox_to_anchor=bbox_to_anchor,
+                  loc=legend_loc,
+                  fontsize=font_size,  # Change the font size of legend items
+                  title_fontsize=font_size
+                  )
+    plt.savefig(f'{directory}_{graph_title}.png', format='png')
+    plt.clf()
+
 def main():
     plot_policy_graph()
 
