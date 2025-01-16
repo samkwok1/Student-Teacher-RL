@@ -52,13 +52,11 @@ def main(args: DictConfig) -> None:
                                          grid=Maze.Grid)
     Reward_maze.make_r_maze()
 
-    # Ideally, we should have two metrics - exploration and exploitations
     # Init Parent agent
     max_steps = max(Maze.path_lengths)
     Q_hyper = args.Q_hyper
     num_steps_to_converge = 0
     zero_to_hundred = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-    gamma_dict, alpha_dict, epsilon_dict = {}, {}, {}
     for g in zero_to_hundred:
         for a in zero_to_hundred:
             for e in zero_to_hundred:
