@@ -212,6 +212,7 @@ class Q_agent():
 
                 total_steps += 1
                 if self.is_policy_optimal() and not indicate:
+                    print(f"Value of indicate: {indicate}")
                     indicate = True
                     self.convergence_steps = total_steps
             
@@ -234,7 +235,7 @@ class Q_agent():
         # Save the "optimal q table"
         # print(self.Q_table)
         if self.is_policy_optimal():
-            print('Whether the policy is optimal: ', self.is_policy_optimal())
+            # print('Whether the policy is optimal: ', self.is_policy_optimal())
             if self.parent:
                 self.Q_optimal = copy.deepcopy(self.Q_table)
 
