@@ -1,0 +1,17 @@
+sim:
+  sim_dir: None
+  sim_id: None
+  verbose: false
+Maze:
+  size: 10
+  num_actions: 4
+  random_seed: 0
+Q_hyper:
+  gamma: 0.9
+  alpha: 0.1
+  epsilon: 0.1
+  num_episodes: 1000
+  parent_reliability: 1
+Child_params:
+  pre_advice_epsilon: 0.2
+  post_advice_weight: 0.1
